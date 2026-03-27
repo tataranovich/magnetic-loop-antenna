@@ -1,9 +1,14 @@
+#include "config.h"
+
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+
 #define ENABLE_PIN D0
 #define STEP_PIN D1
 #define DIR_PIN D2
 #define SENSOR_PIN D5
-#define BTN_DOWN_PIN D6
-#define BTN_UP_PIN D7
+#define BTN_UP_PIN D6
+#define BTN_DOWN_PIN D7
 
 #define DIR_UP HIGH
 #define DIR_DOWN LOW
@@ -20,6 +25,73 @@ int maxPosition;
 bool stepperEnabled;
 bool stepperAutoDisable;
 uint32_t stepperLastUse;
+
+String webString;
+ESP8266WebServer server(80);
+
+void wifi_action_index() {
+  String response = "<!DOCTYPE HTML><html>"
+  "<head><meta charset=\"utf-8\" /><title>Magnetic Loop Antenna</title>"
+  "<style>.button {margin: 10px; padding: 10px; border: 1px solid}</style></head>"
+  "<body><h1>Magnetic loop antenna</h1>"
+  "<p>Position: " + String(position) + "</p>"
+  "<a class=\"button\" href=\"/stepDown?step=100\">-100</a>"
+  "<a class=\"button\" href=\"/stepDown?step=10\">-10</a>"
+  "<a class=\"button\" href=\"/stepDown?step=1\">-1</a>"
+  "<a class=\"button\" href=\"/stepUp?step=1\">+1</a>"
+  "<a class=\"button\" href=\"/stepUp?step=10\">+10</a>"
+  "<a class=\"button\" href=\"/stepUp?step=100\">+100</a>"
+  "</body></html>";
+  server.send(200, "text/html", response);
+}
+
+void wifi_action_stepUp() {
+  int stepValue = 1;
+  if (server.hasArg("step")) {
+    stepValue = server.arg("step").toInt();
+  }
+  for (int i = 0; i < stepValue; i++) {
+    stepUp(1);
+  }
+  wifi_action_index();
+}
+
+void wifi_action_stepDown() {
+  int stepValue = 1;
+  if (server.hasArg("step")) {
+    stepValue = server.arg("step").toInt();
+  }
+  for (int i = 0; i < stepValue; i++) {
+    stepDown(1);
+  }
+  wifi_action_index();
+}
+
+void initWifi() {
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(wifi_ssid, wifi_password);
+
+  Serial.println("Connecting to WiFi network");
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected");
+
+  server.begin();
+  server.on("/", wifi_action_index);
+  server.on("/stepUp", wifi_action_stepUp);
+  server.on("/stepDown", wifi_action_stepDown);
+  Serial.println("Server started");
+
+  Serial.println(WiFi.localIP());
+}
+
+void doWifi() {
+  server.handleClient();
+}
 
 bool isSensorAlert() {
   return digitalRead(SENSOR_PIN) == SENSOR_ALERT;
@@ -200,12 +272,13 @@ void initStepper() {
   pinMode(SENSOR_PIN, INPUT);
 
   enableStepper();
-  stepperAutoDisable = false;
+  stepperAutoDisable = true;
 }
 
 void doStepper() {
+  // Disable stepper driver after 10 seconds of inactivity
   if (stepperAutoDisable && stepperEnabled) {
-    if (millis() > stepperLastUse + 1000) {
+    if (millis() > stepperLastUse + 10000) {
       disableStepper();
     }
   }  
@@ -219,10 +292,13 @@ void setup() {
   initButtons();  
   
   doCalibration();
+
+  initWifi();
 }
 
 void loop() {
   doSerial();
   doButtons();
   doStepper();
+  doWifi();
 }
