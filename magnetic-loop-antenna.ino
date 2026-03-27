@@ -276,9 +276,9 @@ void initStepper() {
 }
 
 void doStepper() {
-  // Disable stepper driver after 10 seconds of inactivity
+  // Disable stepper driver after 1 second of inactivity
   if (stepperAutoDisable && stepperEnabled) {
-    if (millis() > stepperLastUse + 10000) {
+    if (millis() > stepperLastUse + 1000) {
       disableStepper();
     }
   }  
