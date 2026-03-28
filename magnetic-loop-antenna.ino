@@ -34,9 +34,9 @@ void wifi_action_index() {
   "<head><meta charset=\"utf-8\" /><title>Magnetic Loop Antenna</title>"
   "<style>.button {margin: 10px; padding: 10px; border: 1px solid}</style></head>"
   "<body><h1>Magnetic loop antenna</h1>"
-  "<p>Position: " + String(position) + " (min: " + String(minPosition) + ", max: " + String(maxPosition) + ")</p>"
+  "<p>Current position: " + String(position) + " (min: " + String(minPosition) + ", max: " + String(maxPosition) + ") <a class=\"button\" href=\"/calibrate\">Calibrate</a></p>"
   "<form action=\"/setPosition\" method=\"GET\">"
-  "<input type=\"number\" name=\"abs\" min=\"" + String(minPosition) + "\" max=\"" + String(maxPosition) + "\" value=\"" + String(position) + "\">"
+  "Set position: <input type=\"number\" name=\"abs\" min=\"" + String(minPosition) + "\" max=\"" + String(maxPosition) + "\" value=\"" + String(position) + "\">"
   "<input type=\"submit\" name=\"set\" value=\"Set\">"
   "</form><br/>"
   "<a class=\"button\" href=\"/stepDown?step=100\">-100</a>"
@@ -88,6 +88,11 @@ void wifi_action_stepDown() {
   wifi_action_index();
 }
 
+void wifi_action_calibrate() {
+  doCalibration();
+  wifi_action_index();
+}
+
 void initWifi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(wifi_ssid, wifi_password);
@@ -106,6 +111,7 @@ void initWifi() {
   server.on("/stepUp", wifi_action_stepUp);
   server.on("/stepDown", wifi_action_stepDown);
   server.on("/setPosition", wifi_action_setPosition);
+  server.on("/calibrate", wifi_action_calibrate);
   Serial.println("Server started");
 
   Serial.println(WiFi.localIP());
