@@ -30,11 +30,15 @@ String webString;
 ESP8266WebServer server(80);
 
 void wifi_action_index() {
-  String response = "<!DOCTYPE HTML><html>"
+  String response = "<!doctype html><html lang=\"en\">"
   "<head><meta charset=\"utf-8\" /><title>Magnetic Loop Antenna</title>"
   "<style>.button {margin: 10px; padding: 10px; border: 1px solid}</style></head>"
   "<body><h1>Magnetic loop antenna</h1>"
-  "<p>Position: " + String(position) + "</p>"
+  "<p>Position: " + String(position) + " (min: " + String(minPosition) + ", max: " + String(maxPosition) + ")</p>"
+  "<form action=\"/setPosition\" method=\"GET\">"
+  "<input type=\"number\" name=\"abs\" min=\"" + String(minPosition) + "\" max=\"" + String(maxPosition) + "\" value=\"" + String(position) + "\">"
+  "<input type=\"submit\" name=\"set\" value=\"Set\">"
+  "</form><br/>"
   "<a class=\"button\" href=\"/stepDown?step=100\">-100</a>"
   "<a class=\"button\" href=\"/stepDown?step=10\">-10</a>"
   "<a class=\"button\" href=\"/stepDown?step=1\">-1</a>"
@@ -43,6 +47,23 @@ void wifi_action_index() {
   "<a class=\"button\" href=\"/stepUp?step=100\">+100</a>"
   "</body></html>";
   server.send(200, "text/html", response);
+}
+
+void wifi_action_setPosition() {
+  int setPosition;
+  if (server.hasArg("abs")) {
+    setPosition = server.arg("abs").toInt();
+    if (setPosition > position) {
+      while (position < setPosition) {
+        stepUp(1);
+      }
+    } else if (setPosition < position) {
+      while (position > setPosition) {
+        stepDown(1);
+      }
+    }
+  }
+  wifi_action_index();
 }
 
 void wifi_action_stepUp() {
@@ -84,6 +105,7 @@ void initWifi() {
   server.on("/", wifi_action_index);
   server.on("/stepUp", wifi_action_stepUp);
   server.on("/stepDown", wifi_action_stepDown);
+  server.on("/setPosition", wifi_action_setPosition);
   Serial.println("Server started");
 
   Serial.println(WiFi.localIP());
