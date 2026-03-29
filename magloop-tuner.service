@@ -1,0 +1,14 @@
+[Unit]
+Description=Magnetic loop antenna tuner
+After=network.target
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/python3 /opt/magloop/magloop-tuner.py
+Restart=always
+RestartSec=15
+User=magloop
+Group=magloop
+
+[Install]
+WantedBy=multi-user.target
