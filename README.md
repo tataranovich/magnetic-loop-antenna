@@ -11,7 +11,7 @@ Designed using FreeCAD, STL files for printing can be found in `stl` directory.
 
 Assembly details are written in Russian in [blog post](https://blog.tataranovich.com/2026/03/magnetic-loop-antenna.html). Use Google translate if needed.
 
-## Antenna Tuner
+## Automated Tune
 
 Simple python script to adjust antenna controller settings to match frequency change in `rtl_tcp` backend.
 
@@ -26,3 +26,13 @@ sudo install -o root -m 644 magloop-tuner.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now magloop-tuner.service
 ```
+
+## Manual Tune
+
+Antenna can be manually managed from web browser over Wifi or by push buttons at controller board.
+
+![Web UI](img/web-ui.png)
+
+- execute position calibration routine
+- set absolute position
+- set increase/decrease relative position with different increments
