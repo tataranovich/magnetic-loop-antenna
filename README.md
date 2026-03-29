@@ -1,8 +1,11 @@
 # Magnetic Loop Antenna
 
-Magnetic loop antenna for HAM radio.
+Magnetic loop antenna for receiving HAM radio bands with the following features:
 
-![FreeCAD assembly view](img/magloop-assembly.png)
+- control over WiFi from web browser
+- automatic antenna tune on frequency change in `rtl_tcp` source
+
+![Assembled antenna](img/assembled-magloop-v1.jpg)
 
 Designed using FreeCAD, STL files for printing can be found in `stl` directory.
 
