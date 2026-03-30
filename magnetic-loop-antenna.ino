@@ -18,6 +18,8 @@
 
 #define POSITION_MARGIN 150
 
+#define VOLTAGE_MAX 35.0 // 47k + 4.7k resistor divider
+
 int position = 0;
 int minPosition;
 int maxPosition;
@@ -45,6 +47,7 @@ void wifi_action_index() {
   "<a class=\"button\" href=\"/stepUp?step=1\">+1</a>"
   "<a class=\"button\" href=\"/stepUp?step=10\">+10</a>"
   "<a class=\"button\" href=\"/stepUp?step=100\">+100</a>"
+  "<p>Voltage: " + String(getVoltage()) + " V</p>"
   "</body></html>";
   server.send(200, "text/html", response);
 }
@@ -123,6 +126,10 @@ void doWifi() {
 
 bool isSensorAlert() {
   return digitalRead(SENSOR_PIN) == SENSOR_ALERT;
+}
+
+float getVoltage() {
+  return analogRead(A0)*(VOLTAGE_MAX/1023);
 }
 
 void doCalibration() {
@@ -216,20 +223,15 @@ void disableStepper() {
 }
 
 void getInfo() {
-  Serial.print("\nSensor is ");
+  Serial.println("\n\nCurrent position: " + String(position) + " (min: " + String(minPosition) + ", max: " + String(maxPosition) + ")");
+  Serial.println("Voltage: " + String(getVoltage()) + " V");
+
+  Serial.print("Sensor is ");
   if (isSensorAlert()) {
     Serial.println("ALERT");
   } else {
     Serial.println("NORMAL");
   }
-  
-  Serial.print("Position is ");
-  Serial.print(position);
-  Serial.print(" (min: ");
-  Serial.print(minPosition);
-  Serial.print(", max: ");
-  Serial.print(maxPosition);
-  Serial.println(")");
 
   Serial.print("Stepper is ");
   if (stepperEnabled) {
