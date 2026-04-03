@@ -19,6 +19,7 @@
 #define POSITION_MARGIN 150
 
 #define VOLTAGE_MAX 35.0 // 47k + 4.7k resistor divider
+#define VOLTAGE_MIN 12.0 // Stop WiFi and go to infitinite sleep if voltage is below
 
 int position = 0;
 int minPosition;
@@ -151,7 +152,7 @@ void doCalibration() {
       }
     }
   }
-  
+
   // If sensor still alerting then we above maximum position
   if (isSensorAlert()) {
     Serial.println("Sensor is HIGH, checking if above MAX position");
@@ -171,20 +172,20 @@ void doCalibration() {
       stepDown(1);
     }
     position = 0;
-  
+
     // Rewind a bit back before looking MAX position
     for (int i = 0; i < POSITION_MARGIN; i++)
       stepUp(1);
-    
+
     while (!isSensorAlert()) {
       stepUp(1);
     }
     maxPosition = position;
-    
+
     for (int i = 0; i < maxPosition; i++) {
       stepDown(1);
     }
-  
+
     getInfo();
   } else {
     Serial.println("Sensor still ALERT, unable to calibrate");
@@ -249,7 +250,7 @@ void doSerial() {
     if (Serial.available() > 0) {
     String input = Serial.readStringUntil('\n');
     input.trim();
-    
+
     if (input.length() > 0) {
       char command = input.charAt(0);
       int spaceIndex = input.indexOf(' ');
@@ -292,7 +293,7 @@ void doButtons() {
   // Button DOWN is pressed
   if (digitalRead(BTN_DOWN_PIN) == LOW && digitalRead(BTN_UP_PIN) == HIGH) {
     stepDown(10);
-  } 
+  }
 }
 
 void initStepper() {
@@ -311,7 +312,20 @@ void doStepper() {
     if (millis() > stepperLastUse + 1000) {
       disableStepper();
     }
-  }  
+  }
+}
+
+void doLowVoltage() {
+  if (getVoltage() <= 12.0) {
+    Serial.println("Voltage is LOW");
+    WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
+    WiFi.mode(WIFI_OFF);
+    disableStepper();
+    ESP.deepSleep(0);
+  } else {
+    Serial.println("Voltage is NORMAL");
+  }
 }
 
 void setup() {
@@ -319,8 +333,10 @@ void setup() {
   Serial.println("\n\n\nMagnetic Loop Antenna\n\n\n");
 
   initStepper();
-  initButtons();  
-  
+  initButtons();
+
+  doLowVoltage();
+
   doCalibration();
 
   initWifi();
@@ -331,4 +347,5 @@ void loop() {
   doButtons();
   doStepper();
   doWifi();
+  doLowVoltage();
 }
